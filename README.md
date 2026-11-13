@@ -2,6 +2,13 @@
 
 Video URL to MP3 conversion backend. Flask + yt-dlp + ffmpeg, served with gunicorn.
 
+## Frontend
+
+- Live app (Vercel): https://lb-sync-engine33-frontend.vercel.app
+- Source: `~/workspace/lb-sync-engine33-frontend/index.html` (deployed from that folder)
+- The frontend calls this backend at `https://lb-sync-engine33.onrender.com/convert`
+- CORS on this backend is open (`CORS(app)`), so the Vercel frontend can call `/convert` from the browser
+
 ## Endpoints
 
 - `GET /` — health check, returns `{"status": "ok", "service": "LB-Sync-Engine33"}`
