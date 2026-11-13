@@ -52,8 +52,13 @@ def convert_video():
     cookies = _cookies_file()
     if cookies:
         command += ['--cookies', cookies]
+    # No-cookies YouTube fix (proven Nov 13 ~00:32 AM): the Android player
+    # client + skipping the webpage fetch dodges the datacenter-IP 429/403
+    # that kills the web client. tv_embedded needs cookies, ios finds no
+    # formats — android is the one that works. Scoped to youtube only.
     command += [
         '-x', '--audio-format', 'mp3', '--audio-quality', '0',
+        '--extractor-args', 'youtube:player_client=android;skip=webpage',
         '-o', f"output_{token}.%(ext)s",
         url,
     ]
