@@ -1,11 +1,33 @@
 import glob
 import os
 import subprocess
+import tempfile
 from flask import Flask, request, send_file, jsonify, after_this_request
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+# YouTube cookies (optional): Render env var YTDLP_COOKIES holds the
+# Netscape-format cookies.txt content for Lenny's signed-in YouTube
+# session. It is NEVER committed to the repo (public) — env var only.
+# Written once to a temp file and passed to yt-dlp as --cookies, which
+# makes YouTube see a logged-in user instead of a datacenter IP.
+_COOKIES_PATH = None
+
+
+def _cookies_file():
+    global _COOKIES_PATH
+    content = os.environ.get('YTDLP_COOKIES')
+    if not content:
+        return None
+    if _COOKIES_PATH and os.path.exists(_COOKIES_PATH):
+        return _COOKIES_PATH
+    fd, path = tempfile.mkstemp(prefix='yt-cookies-', suffix='.txt')
+    with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        f.write(content)
+    _COOKIES_PATH = path
+    return path
 
 # LB-Sync-Engine33 — backend: video URL -> MP3 download
 
@@ -26,8 +48,11 @@ def convert_video():
     output_filename = f"output_{token}.mp3"
 
     # yt-dlp command to extract audio and encode to high quality MP3 (handles playlists too)
-    command = [
-        'yt-dlp',
+    command = ['yt-dlp']
+    cookies = _cookies_file()
+    if cookies:
+        command += ['--cookies', cookies]
+    command += [
         '-x', '--audio-format', 'mp3', '--audio-quality', '0',
         '-o', f"output_{token}.%(ext)s",
         url,
